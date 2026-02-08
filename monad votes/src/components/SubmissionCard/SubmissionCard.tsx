@@ -1,4 +1,5 @@
-import { Calendar, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, ExternalLink, Trophy } from 'lucide-react';
 import { type Submission } from '../../lib/submissionService';
 import { type Event } from '../../lib/eventService';
 import './SubmissionCard.css';
@@ -8,6 +9,7 @@ interface SubmissionCardProps {
 }
 
 export function SubmissionCard({ submission }: SubmissionCardProps) {
+    const navigate = useNavigate();
     const event = submission.event as Event | undefined;
 
     const formatDate = (dateStr: string) => {
@@ -52,6 +54,13 @@ export function SubmissionCard({ submission }: SubmissionCardProps) {
                         </a>
                     )}
                 </div>
+                <button
+                    className="btn btn-secondary btn-sm leaderboard-link"
+                    onClick={() => navigate(`/leaderboard/${submission.event_id}`)}
+                >
+                    <Trophy size={14} />
+                    View Leaderboard
+                </button>
             </div>
         </div>
     );

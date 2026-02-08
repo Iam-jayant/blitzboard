@@ -147,6 +147,15 @@
     background: #e8f4ff;
 }
 
+.action-btn.action-leaderboard {
+    color: #e6a817;
+}
+
+.action-btn.action-leaderboard:hover {
+    background: #fef9e7;
+    color: #d4960a;
+}
+
 .action-btn.action-agent {
     color: #1a1a1a;
 }

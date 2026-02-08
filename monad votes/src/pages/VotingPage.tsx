@@ -1,31 +1,39 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, AlertCircle, Check, Vote, Zap } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, Check, Vote, Zap, Wallet, ExternalLink, FileCheck } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useWallet } from '../hooks/useWallet';
+import { useWalletClient, usePublicClient } from 'wagmi';
 import { getEventById, type Event } from '../lib/eventService';
 import {
     getVoterEventState,
     getEventSubmissionsForVoting,
     submitVotes,
+    submitVotesOnChain,
     calculateVoteCost,
     type VoterEventState,
     type SubmissionWithVotes,
     type VoteAllocation,
 } from '../lib/votingService';
+import { monadTestnet } from '../lib/wagmi';
 import './VotingPage.css';
 
-type PageState = 'loading' | 'voting' | 'submitting' | 'success' | 'already_voted' | 'error';
+type PageState = 'loading' | 'voting' | 'signing' | 'confirming' | 'syncing' | 'success' | 'already_voted' | 'error';
 
 export function VotingPage() {
     const { eventId } = useParams<{ eventId: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { address, isConnected, ensureConnection, isOnCorrectChain } = useWallet();
+    const { data: walletClient } = useWalletClient();
+    const publicClient = usePublicClient({ chainId: monadTestnet.id });
 
     const [pageState, setPageState] = useState<PageState>('loading');
     const [event, setEvent] = useState<Event | null>(null);
     const [voterState, setVoterState] = useState<VoterEventState | null>(null);
     const [submissions, setSubmissions] = useState<SubmissionWithVotes[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [txHash, setTxHash] = useState<string | null>(null);
 
     // Vote allocations: submission_id -> vote_count
     const [allocations, setAllocations] = useState<Record<string, number>>({});
@@ -100,7 +108,6 @@ export function VotingPage() {
     const handleSubmitVotes = async () => {
         if (!eventId || !user) return;
 
-        setPageState('submitting');
         setError(null);
 
         const voteAllocations: VoteAllocation[] = Object.entries(allocations)
@@ -109,16 +116,50 @@ export function VotingPage() {
 
         if (voteAllocations.length === 0) {
             setError('Please allocate at least one vote');
+            return;
+        }
+
+        // Step 1: Ensure wallet is connected
+        if (!isConnected || !isOnCorrectChain) {
+            setError('Please connect your wallet to Monad Testnet first');
+            const connected = await ensureConnection();
+            if (!connected) return;
+        }
+
+        if (!walletClient || !publicClient) {
+            setError('Wallet not ready. Please try again.');
+            return;
+        }
+
+        // Step 2: Sign & send on-chain transaction
+        setPageState('signing');
+
+        const chainResult = await submitVotesOnChain(
+            eventId,
+            voteAllocations,
+            walletClient,
+            publicClient
+        );
+
+        if (!chainResult.success) {
+            // User rejected or txn failed
+            const msg = chainResult.error || 'Transaction failed';
+            setError(msg.includes('User rejected') || msg.includes('denied')
+                ? 'Transaction was rejected. Please approve in your wallet to submit votes.'
+                : msg);
             setPageState('voting');
             return;
         }
 
-        const result = await submitVotes(eventId, user.id, voteAllocations);
+        setTxHash(chainResult.txHash || null);
+        setPageState('syncing');
 
-        if (!result.success) {
-            setError(result.error || 'Failed to submit votes');
-            setPageState('voting');
-            return;
+        // Step 3: Store in Supabase for fast reads
+        const dbResult = await submitVotes(eventId, user.id, voteAllocations);
+
+        if (!dbResult.success) {
+            // On-chain succeeded but DB failed — votes are safe on-chain
+            console.warn('DB sync failed but on-chain votes recorded:', dbResult.error);
         }
 
         setPageState('success');
@@ -231,6 +272,20 @@ export function VotingPage() {
                             </div>
                         )}
 
+                        {/* Wallet Connection Notice */}
+                        {!isConnected && (
+                            <div className="wallet-notice">
+                                <Wallet size={16} />
+                                <span>Connect your wallet to submit votes on-chain</span>
+                            </div>
+                        )}
+                        {isConnected && !isOnCorrectChain && (
+                            <div className="wallet-notice warning">
+                                <AlertCircle size={16} />
+                                <span>Switch to Monad Testnet to submit votes</span>
+                            </div>
+                        )}
+
                         <div className="voting-actions">
                             <button
                                 className="btn btn-primary btn-large"
@@ -238,20 +293,114 @@ export function VotingPage() {
                                 disabled={creditsUsed === 0}
                             >
                                 <Vote size={20} />
-                                Submit Votes
+                                Sign & Submit Votes
                             </button>
                             <p className="voting-note">
-                                Votes are final and cannot be changed after submission.
+                                Your votes will be signed and recorded on the Monad blockchain.
                             </p>
                         </div>
                     </>
                 );
 
-            case 'submitting':
+            case 'signing':
                 return (
                     <div className="voting-loading">
-                        <Loader2 size={40} className="spinning" />
-                        <p>Submitting your votes...</p>
+                        <div className="txn-step-container">
+                            <div className="txn-step active">
+                                <div className="txn-step-icon signing">
+                                    <Wallet size={24} />
+                                </div>
+                                <div className="txn-step-info">
+                                    <h3>Waiting for Signature</h3>
+                                    <p>Please confirm the transaction in your wallet...</p>
+                                </div>
+                            </div>
+                            <div className="txn-step pending">
+                                <div className="txn-step-icon">
+                                    <Loader2 size={24} />
+                                </div>
+                                <div className="txn-step-info">
+                                    <h3>Confirm on Monad</h3>
+                                    <p>Waiting for blockchain confirmation</p>
+                                </div>
+                            </div>
+                            <div className="txn-step pending">
+                                <div className="txn-step-icon">
+                                    <FileCheck size={24} />
+                                </div>
+                                <div className="txn-step-info">
+                                    <h3>Finalize</h3>
+                                    <p>Syncing results</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'confirming':
+                return (
+                    <div className="voting-loading">
+                        <div className="txn-step-container">
+                            <div className="txn-step done">
+                                <div className="txn-step-icon">
+                                    <Check size={24} />
+                                </div>
+                                <div className="txn-step-info">
+                                    <h3>Signed</h3>
+                                </div>
+                            </div>
+                            <div className="txn-step active">
+                                <div className="txn-step-icon confirming">
+                                    <Loader2 size={24} className="spinning" />
+                                </div>
+                                <div className="txn-step-info">
+                                    <h3>Confirming on Monad</h3>
+                                    <p>Transaction is being confirmed on-chain...</p>
+                                </div>
+                            </div>
+                            <div className="txn-step pending">
+                                <div className="txn-step-icon">
+                                    <FileCheck size={24} />
+                                </div>
+                                <div className="txn-step-info">
+                                    <h3>Finalize</h3>
+                                    <p>Syncing results</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+
+            case 'syncing':
+                return (
+                    <div className="voting-loading">
+                        <div className="txn-step-container">
+                            <div className="txn-step done">
+                                <div className="txn-step-icon">
+                                    <Check size={24} />
+                                </div>
+                                <div className="txn-step-info">
+                                    <h3>Signed</h3>
+                                </div>
+                            </div>
+                            <div className="txn-step done">
+                                <div className="txn-step-icon">
+                                    <Check size={24} />
+                                </div>
+                                <div className="txn-step-info">
+                                    <h3>Confirmed</h3>
+                                </div>
+                            </div>
+                            <div className="txn-step active">
+                                <div className="txn-step-icon confirming">
+                                    <Loader2 size={24} className="spinning" />
+                                </div>
+                                <div className="txn-step-info">
+                                    <h3>Syncing Results</h3>
+                                    <p>Saving to leaderboard...</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 );
 
@@ -261,11 +410,31 @@ export function VotingPage() {
                         <div className="success-icon">
                             <Check size={40} />
                         </div>
-                        <h2>Votes Submitted! 🎉</h2>
-                        <p>Your votes have been recorded.</p>
+                        <h2>Votes Recorded On-Chain</h2>
+                        <p>Your votes have been permanently stored on the Monad blockchain.</p>
                         <div className="votes-summary">
-                            <span>Credits used: {creditsUsed}</span>
+                            <div className="summary-row">
+                                <span>Credits used</span>
+                                <span className="summary-value">{creditsUsed}</span>
+                            </div>
+                            <div className="summary-row">
+                                <span>Projects voted</span>
+                                <span className="summary-value">
+                                    {Object.values(allocations).filter(v => v > 0).length}
+                                </span>
+                            </div>
                         </div>
+                        {txHash && (
+                            <a
+                                href={`https://testnet.monadexplorer.com/tx/${txHash}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="tx-link"
+                            >
+                                <ExternalLink size={14} />
+                                View transaction on Monad Explorer
+                            </a>
+                        )}
                         <button
                             className="btn btn-primary"
                             onClick={() => navigate(`/leaderboard/${eventId}`)}

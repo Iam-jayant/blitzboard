@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Eye, Edit2, XCircle, Clock, Users, FileText, Bot } from 'lucide-react';
+import { Calendar, Eye, Edit2, XCircle, Clock, Users, FileText, Bot, Trophy } from 'lucide-react';
 import { type Event, getDisplayStatus } from '../../lib/eventService';
 import './EventCard.css';
 
@@ -107,6 +107,15 @@ export function EventCard({ event, onView, onEdit, onClose, onRunAgents, agentRu
                         title="View Submissions"
                     >
                         <FileText size={18} />
+                    </button>
+                )}
+                {(displayStatus === 'live' || displayStatus === 'ended') && (
+                    <button
+                        className="action-btn action-leaderboard"
+                        onClick={() => navigate(`/leaderboard/${event.id}`)}
+                        title="View Leaderboard"
+                    >
+                        <Trophy size={18} />
                     </button>
                 )}
                 <button className="action-btn" onClick={handleView} title="View">

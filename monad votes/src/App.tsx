@@ -29,16 +29,6 @@ function HomePage() {
   const [showRoleModal, setShowRoleModal] = useState(false);
   const liveEventsRef = useRef<HTMLDivElement>(null);
 
-  const handleEnterEvent = () => {
-    if (authenticated && user?.role) {
-      // Authenticated user: go to their dashboard
-      navigate(`/dashboard/${user.role}`);
-    } else {
-      // Not authenticated: open role selection modal
-      setShowRoleModal(true);
-    }
-  };
-
   // Handle redirect after auth
   useEffect(() => {
     if (shouldRedirect) {
@@ -67,7 +57,7 @@ function HomePage() {
     <div className="app">
       <Header />
       <main>
-        <Hero onEnterEvent={handleEnterEvent} />
+        <Hero onViewLeaderboards={() => liveEventsRef.current?.scrollIntoView({ behavior: 'smooth' })} />
         <div ref={liveEventsRef}>
           <LiveEventsSection />
         </div>

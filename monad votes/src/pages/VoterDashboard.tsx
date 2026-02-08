@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Loader2, Vote, CheckCircle, Clock } from 'lucide-react';
+import { User, Loader2, Vote, CheckCircle, Clock, Trophy } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { JoinEventForm } from '../components/JoinEventForm';
 import { getVoterEvents, type VoterEventState } from '../lib/votingService';
@@ -108,13 +108,22 @@ export function VoterDashboard() {
                                             <span className="credits">{ve.total_credits - ve.credits_spent}</span>
                                             <span className="label">credits left</span>
                                         </div>
-                                        <button
-                                            className="btn btn-primary"
-                                            onClick={() => navigate(`/vote/${ve.event_id}`)}
-                                        >
-                                            <Vote size={18} />
-                                            Vote Now
-                                        </button>
+                                        <div className="event-actions">
+                                            <button
+                                                className="btn btn-primary"
+                                                onClick={() => navigate(`/vote/${ve.event_id}`)}
+                                            >
+                                                <Vote size={18} />
+                                                Vote Now
+                                            </button>
+                                            <button
+                                                className="btn btn-secondary"
+                                                onClick={() => navigate(`/leaderboard/${ve.event_id}`)}
+                                            >
+                                                <Trophy size={18} />
+                                                Leaderboard
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
@@ -149,6 +158,13 @@ export function VoterDashboard() {
                                         <p className="voted-date">
                                             {ve.voted_at && formatDate(ve.voted_at)}
                                         </p>
+                                        <button
+                                            className="btn btn-secondary btn-sm"
+                                            onClick={() => navigate(`/leaderboard/${ve.event_id}`)}
+                                        >
+                                            <Trophy size={16} />
+                                            View Leaderboard
+                                        </button>
                                     </div>
                                 </div>
                             ))}

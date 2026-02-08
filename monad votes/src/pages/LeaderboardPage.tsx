@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, Loader2, ExternalLink, RefreshCw, Users, Bot, Layers, Zap } from 'lucide-react';
+import { ArrowLeft, Trophy, Loader2, ExternalLink, RefreshCw, Users, Bot, Layers, Zap, Crown, Medal, Award, CheckCircle, Clock, Circle } from 'lucide-react';
 import { getEventById, type Event } from '../lib/eventService';
 import { getEventVotingStatus, subscribeToLeaderboard } from '../lib/leaderboardService';
 import {
@@ -105,19 +105,19 @@ export function LeaderboardPage() {
     const getStatusBadge = () => {
         switch (votingStatus) {
             case 'live_voting':
-                return <span className="status-badge live">🔴 LIVE VOTING</span>;
+                return <span className="status-badge live"><Circle size={10} className="live-indicator" /> LIVE VOTING</span>;
             case 'voting_closed':
-                return <span className="status-badge closed">✅ FINAL RESULTS</span>;
+                return <span className="status-badge closed"><CheckCircle size={14} /> FINAL RESULTS</span>;
             default:
-                return <span className="status-badge upcoming">⏳ UPCOMING</span>;
+                return <span className="status-badge upcoming"><Clock size={14} /> UPCOMING</span>;
         }
     };
 
     const getRankDisplay = (rank: number) => {
         switch (rank) {
-            case 1: return <span className="rank gold">🥇</span>;
-            case 2: return <span className="rank silver">🥈</span>;
-            case 3: return <span className="rank bronze">🥉</span>;
+            case 1: return <span className="rank gold"><Crown size={20} /></span>;
+            case 2: return <span className="rank silver"><Medal size={20} /></span>;
+            case 3: return <span className="rank bronze"><Award size={20} /></span>;
             default: return <span className="rank">{rank}</span>;
         }
     };
@@ -295,10 +295,16 @@ export function LeaderboardPage() {
                                         {activeTab === 'combined' && (entry.human_score > 0 || entry.agent_score > 0) && (
                                             <span className="score-breakdown">
                                                 {entry.human_score > 0 && (
-                                                    <span className="score-human" title="Human votes">👤{entry.human_score}</span>
+                                                    <span className="score-human" title="Human votes">
+                                                        <Users size={12} />
+                                                        {entry.human_score}
+                                                    </span>
                                                 )}
                                                 {entry.agent_score > 0 && (
-                                                    <span className="score-agent" title="Agent votes">🤖{entry.agent_score}</span>
+                                                    <span className="score-agent" title="Agent votes">
+                                                        <Bot size={12} />
+                                                        {entry.agent_score}
+                                                    </span>
                                                 )}
                                             </span>
                                         )}

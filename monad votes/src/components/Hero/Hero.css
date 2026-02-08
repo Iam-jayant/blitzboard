@@ -180,7 +180,49 @@
     gap: 16px;
 }
 
-/* Reverting to standard button sizes or specific overrides if needed, but primarily relying on utility classes */
+.btn-hero-leaderboard {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 12px;
+    max-width: 270px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+    background: #fff;
+    color: #000;
+    border: 2px solid #000;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 3px 3px 0 #000;
+}
+
+.btn-hero-leaderboard:hover {
+    box-shadow: 4px 4px 0 #000;
+    transform: translate(-1px, -1px);
+    background: #f5f5f5;
+}
+
+.btn-hero-leaderboard:active {
+    box-shadow: 1px 1px 0 #000;
+    transform: translate(1px, 1px);
+}
+
+.live-dot-pulse {
+    width: 8px;
+    height: 8px;
+    background: #ff3b3b;
+    border-radius: 50%;
+    flex-shrink: 0;
+    animation: dot-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes dot-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
 
 
 /* Feature Bar */

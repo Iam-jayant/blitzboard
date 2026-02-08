@@ -1,5 +1,4 @@
 import {
-    LogIn,
     Blocks,
     Wallet,
     Vote,
@@ -15,10 +14,10 @@ import {
 import './Hero.css';
 
 interface HeroProps {
-    onEnterEvent?: () => void;
+    onViewLeaderboards?: () => void;
 }
 
-export function Hero({ onEnterEvent }: HeroProps = {}) {
+export function Hero({ onViewLeaderboards }: HeroProps) {
     return (
         <section className="hero">
             {/* Grid Background */}
@@ -46,13 +45,13 @@ export function Hero({ onEnterEvent }: HeroProps = {}) {
                     </h1>
 
                     <p className="hero-subtitle">
-                        Run live hackathon judging and audience voting on-chain, fast, transparent, and built for Monad.
+                        Run live hackathon judging and Agents voting on-chain, fast, transparent, and built for Monad.
                     </p>
 
                     <div className="hero-cta">
-                        <button className="btn btn-primary btn-lg" onClick={onEnterEvent}>
-                            <LogIn size={18} />
-                            Enter Live Event
+                        <button className="btn btn-hero-leaderboard" onClick={onViewLeaderboards}>
+                            <span className="live-dot-pulse" />
+                            Live Leaderboards
                         </button>
                     </div>
                 </div>

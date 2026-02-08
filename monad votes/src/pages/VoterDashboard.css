@@ -1,7 +1,7 @@
 .voter-dashboard {
     min-height: 100vh;
     background: #fffbf5;
-    padding: 120px 0 60px;
+    padding: 140px 0 60px;
 }
 
 /* Profile Section */
@@ -216,6 +216,27 @@
     font-size: 13px;
     color: #666;
     margin: 0;
+}
+
+.btn-secondary {
+    background: #d4ff4f;
+    color: #000;
+}
+
+.btn-secondary:hover {
+    box-shadow: 4px 4px 0 #000;
+    transform: translate(-2px, -2px);
+}
+
+.btn-sm {
+    padding: 8px 12px;
+    font-size: 13px;
+}
+
+.event-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .spinning {
