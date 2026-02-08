@@ -19,7 +19,8 @@ const { createClient } = require("@supabase/supabase-js");
 // =====================================================
 // CONFIG
 // =====================================================
-const PORT = process.env.AGENT_API_PORT || 3001;
+const PORT = process.env.PORT || process.env.AGENT_API_PORT || 3001;
+const HOST = '0.0.0.0'; // Bind to all interfaces (required for Render/cloud)
 const RPC_URL = "https://testnet-rpc.monad.xyz";
 const CONTRACT_ADDRESS = "0xc410352706ac0Ae9eB670afda875E602c83bFce0";
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
@@ -603,7 +604,7 @@ const server = http.createServer(async (req, res) => {
     sendJSON(res, 404, { error: "Not found" });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
     console.log(`\n🤖 Agent Voting API Server`);
     console.log(`   Port:       ${PORT}`);
     console.log(`   OpenRouter: ${OPENROUTER_API_KEY ? "✅ " + OPENROUTER_MODEL : "❌ Not set (using heuristics)"}`);
