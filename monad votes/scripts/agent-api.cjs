@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // =====================================================
 // AI Agent Voting API Server
 // Evaluates submissions using OpenRouter (free LLMs)
