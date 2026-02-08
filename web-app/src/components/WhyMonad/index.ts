@@ -1,1 +1,0 @@
-export { WhyMonad } from './WhyMonad';

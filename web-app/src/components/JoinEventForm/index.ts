@@ -1,1 +1,0 @@
-export { JoinEventForm } from './JoinEventForm';
