@@ -24,7 +24,7 @@ export function VotingPage() {
     const { eventId } = useParams<{ eventId: string }>();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { address, isConnected, ensureConnection, isOnCorrectChain } = useWallet();
+    const { isConnected, ensureConnection, isOnCorrectChain } = useWallet();
     const { data: walletClient } = useWalletClient();
     const publicClient = usePublicClient({ chainId: monadTestnet.id });
 

@@ -1,7 +1,7 @@
 import { supabase } from './supabase';
 import { createPublicClient, http, parseAbiItem } from 'viem';
 import { monadTestnet } from './wagmi';
-import { AGENT_CONSENSUS_ADDRESS, AGENT_CONSENSUS_ABI } from './contract';
+import { AGENT_CONSENSUS_ADDRESS } from './contract';
 
 // =====================================================
 // TYPES
@@ -414,6 +414,14 @@ export async function checkAgentApiHealth(): Promise<boolean> {
  * 5. Records results in Supabase
  */
 export async function triggerAgentVoting(eventId: string, agentCount: number = 5): Promise<AgentVotingResult> {
+    // Check if agent API is reachable first
+    const isHealthy = await checkAgentApiHealth();
+    if (!isHealthy) {
+        throw new Error(
+            'Agent API server is not running. Start it with: node scripts/agent-api.cjs'
+        );
+    }
+
     const res = await fetch(`${AGENT_API_URL}/api/agent-vote/${encodeURIComponent(eventId)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
